@@ -1,0 +1,5 @@
+mkdir docs
+touch docs/.gitkeep
+git add docs/.gitkeep
+git commit -m "Add empty docs folder"
+git push
