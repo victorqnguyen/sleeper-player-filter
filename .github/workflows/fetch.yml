@@ -23,14 +23,13 @@ jobs:
       - name: Run filter script
         run: python filter_players.py
 
-      - name: Commit filtered file and push
+    - name: Commit filtered file and push
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
-          git add docs/players_2025.json
-          git commit -m "Update filtered players file" || echo "No changes to commit"
-          git push
-
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+        git add docs/players_2025.json
+        git commit -m "Update filtered players file" || echo "No changes to commit"
+        git push
