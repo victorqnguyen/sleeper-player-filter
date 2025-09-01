@@ -1,35 +1,42 @@
-name: Filter Sleeper NFL Players
+name: Filter Players and Commit
 
 on:
-  schedule:
-    - cron: "0 9 * * *"   # runs every day at 9 AM UTC
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  run-script:
+  filter_and_commit:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run filter script
+      - name: Run player filter script
         run: python filter_players.py
 
-      - name: Commit filtered file and push
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+      - name: Configure git
         run: |
-          git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
-          git add docs/players_2025.json
-          git commit -m "Update filtered players file" || echo "No changes to commit"
-          git push
+          git config --global user.name "github-actions[bot]"
+
+      - name: Add generated file
+        run: git add docs/players_2025.jsonl
+
+      - name: Commit file
+        run: git commit -m "Add filtered players file" || echo "Nothing to commit"
+
+      - name: Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git push
