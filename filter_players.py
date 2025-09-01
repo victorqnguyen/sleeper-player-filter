@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import requests
 
-VALID_POSITIONS = {"QB", "RB", "WR", "TE", "K", "DEF"}
+VALID_POSITIONS = ["QB", "RB", "WR", "TE", "K", "DEF"]  # preserve order
 EXCLUDED_STATUSES = {"injured_reserve", "non_football_injury", "physically_unable_to_perform"}
 
 SLEEPER_PLAYERS_URL = "https://api.sleeper.app/v1/players/nfl"
@@ -48,7 +48,7 @@ def filter_players(players: dict) -> list:
         position = p.get("position")
 
         if position == "DEF":
-            # Skip — we’ll handle defenses separately
+            # Skip — handled separately
             continue
 
         filtered.append({
@@ -90,13 +90,28 @@ def main():
     # Filter
     filtered = filter_players(all_players)
 
+    # Sort: by VALID_POSITIONS order, then by full_name
+    pos_order = {pos: i for i, pos in enumerate(VALID_POSITIONS)}
+    filtered.sort(key=lambda x: (pos_order.get(x["position"], 99), x["full_name"]))
+
     # Ensure output directory exists
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
-    # Write JSONL
+    # Write JSONL (stable field order)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        for player in filtered:
-            f.write(json.dumps(player, ensure_ascii=False) + "\n")
+        for p in filtered:
+            ordered = {
+                "player_id": p["player_id"],
+                "full_name": p["full_name"],
+                "first_name": p["first_name"],
+                "last_name": p["last_name"],
+                "position": p["position"],
+                "status": p["status"],
+                "years_exp": p["years_exp"],
+                "depth_chart_order": p["depth_chart_order"],
+                "team": p["team"],
+            }
+            f.write(json.dumps(ordered, ensure_ascii=False) + "\n")
 
     print(
         f"Total players: {len(all_players)} | "
